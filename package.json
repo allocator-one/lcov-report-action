@@ -1,0 +1,13 @@
+{
+  "type": "module",
+  "scripts": {
+    "build": "ncc build index.js -o dist --license licenses.txt"
+  },
+  "dependencies": {
+    "@actions/core": "^3.0.0",
+    "@actions/github": "^9.0.0"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.38.4"
+  }
+}

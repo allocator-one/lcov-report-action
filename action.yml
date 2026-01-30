@@ -1,0 +1,28 @@
+name: "LCOV Report"
+description: "LCOV coverage reporter for Elixir projects"
+inputs:
+  lcov-file:
+    description: "Path to lcov.info file"
+    required: true
+  github-token:
+    description: "GitHub token from secrets.GITHUB_TOKEN"
+    required: true
+  comment-title:
+    description: "Report comment title (defaults to empty)"
+    required: false
+    default: ""
+  all-files-minimum-coverage:
+    description: "All files minimum coverage percentage (0-100)"
+    required: false
+    default: "0"
+  changed-files-minimum-coverage:
+    description: "Changed files minimum coverage percentage (0-100)"
+    required: false
+    default: "0"
+  test-summary-file:
+    description: "Path to test summary file containing timing and test count information"
+    required: false
+    default: ""
+runs:
+  using: "node24"
+  main: "dist/index.js"
