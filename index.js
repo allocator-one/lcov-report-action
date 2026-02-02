@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, relative } from 'path';
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 
@@ -60,7 +60,9 @@ function parseLcovFile(filePath) {
   for (const line of content.split('\n')) {
     if (line.startsWith('SF:')) {
       const filePath = line.substring(3);
-      currentFile = { file: resolve(filePath), lines: { found: 0, hit: 0 } };
+      const absolutePath = resolve(process.cwd(), filePath);
+      const relativePath = relative(process.cwd(), absolutePath);
+      currentFile = { file: relativePath, lines: { found: 0, hit: 0 } };
     } else if (line.startsWith('LF:') && currentFile) {
       currentFile.lines.found = parseInt(line.substring(3), 10);
     } else if (line.startsWith('LH:') && currentFile) {
@@ -116,7 +118,7 @@ async function getChangedFiles(token) {
     per_page: MAX_FILES_PER_PAGE
   });
 
-  return new Set(data.files.map(f => resolve(f.filename)));
+  return new Set(data.files.map(f => f.filename));
 }
 
 function buildComment(allCov, changedCov, allMin, changedMin, passed, hasChanged, testSummary) {

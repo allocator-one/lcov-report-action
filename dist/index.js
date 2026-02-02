@@ -35934,7 +35934,9 @@ function parseLcovFile(filePath) {
   for (const line of content.split('\n')) {
     if (line.startsWith('SF:')) {
       const filePath = line.substring(3);
-      currentFile = { file: (0,external_path_namespaceObject.resolve)(filePath), lines: { found: 0, hit: 0 } };
+      const absolutePath = (0,external_path_namespaceObject.resolve)(process.cwd(), filePath);
+      const relativePath = (0,external_path_namespaceObject.relative)(process.cwd(), absolutePath);
+      currentFile = { file: relativePath, lines: { found: 0, hit: 0 } };
     } else if (line.startsWith('LF:') && currentFile) {
       currentFile.lines.found = parseInt(line.substring(3), 10);
     } else if (line.startsWith('LH:') && currentFile) {
@@ -35990,7 +35992,7 @@ async function getChangedFiles(token) {
     per_page: MAX_FILES_PER_PAGE
   });
 
-  return new Set(data.files.map(f => (0,external_path_namespaceObject.resolve)(f.filename)));
+  return new Set(data.files.map(f => f.filename));
 }
 
 function buildComment(allCov, changedCov, allMin, changedMin, passed, hasChanged, testSummary) {
