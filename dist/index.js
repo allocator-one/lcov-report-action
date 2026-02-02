@@ -28849,6 +28849,8 @@ var __webpack_exports__ = {};
 
 ;// CONCATENATED MODULE: external "fs"
 const external_fs_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("fs");
+;// CONCATENATED MODULE: external "path"
+const external_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("path");
 ;// CONCATENATED MODULE: external "os"
 const external_os_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("os");
 ;// CONCATENATED MODULE: ./node_modules/@actions/core/lib/utils.js
@@ -29016,8 +29018,6 @@ function file_command_prepareKeyValueMessage(key, value) {
     return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
 }
 //# sourceMappingURL=file-command.js.map
-;// CONCATENATED MODULE: external "path"
-const external_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("path");
 // EXTERNAL MODULE: external "http"
 var external_http_ = __nccwpck_require__(8611);
 // EXTERNAL MODULE: external "https"
@@ -35876,6 +35876,7 @@ function getOctokit(token, options, ...additionalPlugins) {
 
 
 
+
 const LCOV_COMMENT_MARKER = '<!-- lcov-comment -->';
 const MAX_FILES_PER_PAGE = 100;
 
@@ -35932,7 +35933,8 @@ function parseLcovFile(filePath) {
 
   for (const line of content.split('\n')) {
     if (line.startsWith('SF:')) {
-      currentFile = { file: line.substring(3), lines: { found: 0, hit: 0 } };
+      const filePath = line.substring(3);
+      currentFile = { file: (0,external_path_namespaceObject.resolve)(filePath), lines: { found: 0, hit: 0 } };
     } else if (line.startsWith('LF:') && currentFile) {
       currentFile.lines.found = parseInt(line.substring(3), 10);
     } else if (line.startsWith('LH:') && currentFile) {
@@ -35988,7 +35990,7 @@ async function getChangedFiles(token) {
     per_page: MAX_FILES_PER_PAGE
   });
 
-  return new Set(data.files.map(f => f.filename));
+  return new Set(data.files.map(f => (0,external_path_namespaceObject.resolve)(f.filename)));
 }
 
 function buildComment(allCov, changedCov, allMin, changedMin, passed, hasChanged, testSummary) {
