@@ -35988,7 +35988,7 @@ async function getChangedFiles(token) {
     per_page: MAX_FILES_PER_PAGE
   });
 
-  return new Set(data.files.map(f => `/${f.filename}`));
+  return new Set(data.files.map(f => f.filename));
 }
 
 function buildComment(allCov, changedCov, allMin, changedMin, passed, hasChanged, testSummary) {
