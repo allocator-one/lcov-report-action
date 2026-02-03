@@ -36040,9 +36040,13 @@ function buildChangedFilesSection(cov, min) {
     : `**${pct}%** of ${cov.found.toLocaleString()} lines`;
 
   const sortedFiles = [...cov.files].sort((a, b) => {
+    if (a.lines.found === 0 && b.lines.found === 0) return 0;
+    if (a.lines.found === 0) return 1;
+    if (b.lines.found === 0) return -1;
     const aPct = calculatePercentage(a.lines.hit, a.lines.found);
     const bPct = calculatePercentage(b.lines.hit, b.lines.found);
-    return aPct - bPct;
+    if (aPct !== bPct) return aPct - bPct;
+    return b.lines.found - a.lines.found;
   });
 
   const table = buildEnhancedTable(sortedFiles);
@@ -36069,13 +36073,15 @@ function buildEnhancedTable(files) {
 
   const rows = files
     .map(f => {
-      const pct = calculatePercentage(f.lines.hit, f.lines.found).toFixed(1);
       const fileName = f.file.replace(/^\//, '');
+      if (f.lines.found === 0) return `| \`${fileName}\` | - |`;
+
+      const pct = calculatePercentage(f.lines.hit, f.lines.found).toFixed(1);
       return `| \`${fileName}\` | ${pct}% of ${f.lines.found} lines |`;
     })
     .join('\n');
 
-  return `| File | Coverage |\n|------|:--------:|\n${rows}`;
+  return `| File | Coverage |\n| --- | --- |\n${rows}`;
 }
 
 async function postComment(token, comment) {
