@@ -35887,6 +35887,7 @@ async function run() {
     const testSummaryFile = getInput('test-summary-file') || null;
     const allFilesMin = parseFloat(getInput('all-files-minimum-coverage')) || 0;
     const changedFilesMin = parseFloat(getInput('changed-files-minimum-coverage')) || 0;
+    const prNumberInput = getInput('pr-number') || '';
 
     if (!(0,external_fs_namespaceObject.existsSync)(lcovFile)) {
       throw new Error(`LCOV file not found: ${lcovFile}`);
@@ -35909,7 +35910,11 @@ async function run() {
       setFailed('Coverage is below the minimum threshold');
     }
 
-    if (github_context.eventName === 'pull_request') {
+    const prNumber = prNumberInput
+      ? parseInt(prNumberInput, 10)
+      : github_context.payload.pull_request?.number;
+
+    if (prNumber) {
       const comment = buildComment(
         allCoverage,
         changedCoverage,
@@ -35919,7 +35924,7 @@ async function run() {
         changedFiles.size > 0,
         testSummary
       );
-      await postComment(githubToken, comment);
+      await postComment(githubToken, comment, prNumber);
     }
   } catch (error) {
     setFailed(`Action failed: ${error.message}\n${error.stack}`);
@@ -35980,19 +35985,35 @@ function calculateCoverage(coverage, changedFiles = null) {
 }
 
 async function getChangedFiles(token) {
-  if (github_context.eventName !== 'pull_request') {
-    return new Set();
+  const octokit = getOctokit(token);
+  const { owner, repo } = github_context.repo;
+
+  if (github_context.eventName === 'pull_request') {
+    const { data } = await octokit.rest.repos.compareCommitsWithBasehead({
+      owner,
+      repo,
+      basehead: `${github_context.payload.pull_request.base.sha}...${github_context.payload.pull_request.head.sha}`,
+      per_page: MAX_FILES_PER_PAGE
+    });
+    return new Set(data.files.map(f => f.filename));
   }
 
-  const octokit = getOctokit(token);
-  const { data } = await octokit.rest.repos.compareCommitsWithBasehead({
-    owner: github_context.repo.owner,
-    repo: github_context.repo.repo,
-    basehead: `${github_context.payload.pull_request.base.sha}...${github_context.payload.pull_request.head.sha}`,
-    per_page: MAX_FILES_PER_PAGE
-  });
+  // On push events, compare with parent commit
+  if (github_context.eventName === 'push' && github_context.payload.before) {
+    try {
+      const { data } = await octokit.rest.repos.compareCommitsWithBasehead({
+        owner,
+        repo,
+        basehead: `${github_context.payload.before}...${github_context.sha}`,
+        per_page: MAX_FILES_PER_PAGE
+      });
+      return new Set(data.files.map(f => f.filename));
+    } catch {
+      return new Set();
+    }
+  }
 
-  return new Set(data.files.map(f => f.filename));
+  return new Set();
 }
 
 function buildComment(allCov, changedCov, allMin, changedMin, passed, hasChanged, testSummary) {
@@ -36084,10 +36105,10 @@ function buildEnhancedTable(files) {
   return `| File | Coverage |\n| --- | --- |\n${rows}`;
 }
 
-async function postComment(token, comment) {
+async function postComment(token, comment, prNumber) {
   const octokit = getOctokit(token);
   const { owner, repo } = github_context.repo;
-  const issue_number = github_context.payload.pull_request.number;
+  const issue_number = prNumber;
 
   const { data: comments } = await octokit.rest.issues.listComments({
     owner,

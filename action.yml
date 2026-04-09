@@ -19,6 +19,10 @@ inputs:
     description: "Changed files minimum coverage percentage (0-100)"
     required: false
     default: "0"
+  pr-number:
+    description: "PR number to comment on (auto-detected on pull_request events, required on push events)"
+    required: false
+    default: ""
   test-summary-file:
     description: "Path to test summary file containing timing and test count information"
     required: false
